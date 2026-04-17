@@ -1,0 +1,217 @@
+/*
+ * Flight Ticket Reservation System using Doubly Linked List
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h> // Required for time() to seed the random number generator
+
+// --- Typedef Structure Definition ---
+typedef struct Reservation {
+    int ticketId;
+    char passengerName[50];
+    int flightNumber;
+    struct Reservation* prev; 
+    struct Reservation* next; 
+} Node;
+
+// Global variable for the head of the Doubly Linked List
+Node* head = NULL;
+
+// --- Direct Function Definitions ---
+
+// Helper function to check if a randomly generated ID already exists
+int isIdUnique(int id) {
+    Node* temp = head;
+    while (temp != NULL) {
+        if (temp->ticketId == id) {
+            return 0; // Not unique
+        }
+        temp = temp->next;
+    }
+    return 1; // Unique
+}
+
+// 1. INSERTION (With randomized Ticket ID)
+void insertReservation(char* name, int fNum) {
+    Node* newNode = (Node*)malloc(sizeof(Node));
+    
+    // Generate a random 4-digit ID (1000 to 9999) and ensure it's unique
+    int randomId;
+    do {
+        randomId = (rand() % 9000) + 1000;
+    } while (!isIdUnique(randomId));
+    
+    newNode->ticketId = randomId; 
+    strcpy(newNode->passengerName, name);
+    newNode->flightNumber = fNum;
+    newNode->next = NULL;
+    newNode->prev = NULL;
+
+    // If the list is empty, make the new node the head
+    if (head == NULL) {
+        head = newNode;
+        printf("\n>>> Booking Successful! Your Ticket ID is: %d\n", newNode->ticketId);
+        return;
+    }
+
+    // Traverse to the last node
+    Node* temp = head;
+    while (temp->next != NULL) {
+        temp = temp->next;
+    }
+
+    // Link the new node at the end
+    temp->next = newNode;
+    newNode->prev = temp;
+    
+    printf("\n>>> Booking Successful! Your Ticket ID is: %d\n", newNode->ticketId);
+}
+
+// 2. DELETION
+void deleteReservation(int id) {
+    if (head == NULL) {
+        printf("\nSystem is empty. No reservations to delete.\n");
+        return;
+    }
+
+    Node* temp = head;
+
+    // Search for the node with the matching ID
+    while (temp != NULL && temp->ticketId != id) {
+        temp = temp->next;
+    }
+
+    // If the node was not found
+    if (temp == NULL) {
+        printf("\nTicket ID %d not found.\n", id);
+        return;
+    }
+
+    // If deleting the head node
+    if (temp == head) {
+        head = temp->next;
+    }
+
+    // Bypass the node being deleted
+    if (temp->next != NULL) {
+        temp->next->prev = temp->prev;
+    }
+    if (temp->prev != NULL) {
+        temp->prev->next = temp->next;
+    }
+
+    // Free the memory
+    free(temp);
+    printf("\n>>> Cancellation Successful! Ticket %d removed.\n", id);
+}
+
+// 3. SEARCHING
+void searchReservation(int id) {
+    if (head == NULL) {
+        printf("\nSystem is empty. No reservations exist.\n");
+        return;
+    }
+
+    Node* temp = head;
+    int found = 0;
+
+    while (temp != NULL) {
+        if (temp->ticketId == id) {
+            printf("\n--- Reservation Found ---\n");
+            printf("Ticket ID : %d\n", temp->ticketId);
+            printf("Passenger : %s\n", temp->passengerName);
+            printf("Flight No : %d\n", temp->flightNumber);
+            found = 1;
+            break;
+        }
+        temp = temp->next;
+    }
+
+    if (!found) {
+        printf("\nReservation with Ticket ID %d not found.\n", id);
+    }
+}
+
+// 4. DISPLAY ALL 
+void displayAll() {
+    if (head == NULL) {
+        printf("\nNo active reservations.\n");
+        return;
+    }
+
+    Node* temp = head;
+    printf("\n--- All Active Reservations ---\n");
+    printf("%-10s %-25s %-10s\n", "Ticket ID", "Passenger Name", "Flight No");
+    printf("--------------------------------------------------\n");
+    
+    while (temp != NULL) {
+        printf("%-10d %-25s %-10d\n", temp->ticketId, temp->passengerName, temp->flightNumber);
+        temp = temp->next;
+    }
+}
+
+// --- Main Program ---
+int main() {
+    int choice, id, fNum;
+    char name[50];
+
+    // Seed the random number generator using the current system time
+    srand(time(NULL));
+
+    printf("===================================================\n");
+    printf(" Flight Reservation System (Doubly Linked List)\n");
+    printf("===================================================\n");
+
+    while (1) {
+        printf("\nMenu:\n");
+        printf("1. Book a Reservation\n");
+        printf("2. Cancel a Reservation\n");
+        printf("3. Search for a Reservation\n");
+        printf("4. View All Reservations\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        
+        if (scanf("%d", &choice) != 1) {
+            printf("Invalid input. Exiting...\n");
+            break;
+        }
+
+        switch (choice) {
+            case 1:
+                printf("\nEnter Passenger Name: ");
+                scanf(" %49[^\n]", name); 
+                printf("Enter Flight Number: ");
+                scanf("%d", &fNum);
+                
+                // Function Call (Ticket ID is generated inside)
+                insertReservation(name, fNum);
+                break;
+            case 2:
+                printf("\nEnter Ticket ID to Cancel: ");
+                scanf("%d", &id);
+                
+                // Function Call
+                deleteReservation(id);
+                break;
+            case 3:
+                printf("\nEnter Ticket ID to Search: ");
+                scanf("%d", &id);
+                
+                // Function Call
+                searchReservation(id);
+                break;
+            case 4:
+                // Function Call
+                displayAll();
+                break;
+            case 5:
+                printf("Exiting system. Have a great day!\n");
+                return 0;
+            default:
+                printf("Invalid choice! Try again.\n");
+        }
+    }
+    return 0;
+}
